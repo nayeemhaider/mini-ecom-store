@@ -1,8 +1,16 @@
 FROM node:18-alpine
 WORKDIR /app
-COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
+
+# Install dependencies
+COPY package.json package-lock.json ./
+RUN npm install --frozen-lockfile
+
+# Copy source & build
 COPY . .
-RUN yarn build
+RUN npm run build
+
+# Expose the port your app listens on
 EXPOSE 8000
-CMD ["node", "dist/app.js"]
+
+# Launch via your "start" script
+CMD ["npm", "run", "start"]

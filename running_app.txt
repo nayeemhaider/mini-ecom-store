@@ -3,17 +3,19 @@ docker-compose up --build
 
 Backend → http://localhost:8000
 
+curl http://localhost:8000/api/products
+
 Frontend → http://localhost:3000
 
 # Manually
 
 # In one terminal
 cd backend
-yarn dev          # starts ts-node-dev on port 8000
+npm run dev         # starts ts-node-dev on port 8000
 
 # In another terminal
 cd frontend
-yarn dev          # starts Next.js on port 3000
+npm run dev          # starts Next.js on port 3000
 
 # Verify
 

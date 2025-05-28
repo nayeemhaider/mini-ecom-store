@@ -5,30 +5,51 @@ import bodyParser from 'body-parser';
 import { Order } from '../models/Order';
 
 dotenv.config();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2020-08-27' });
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2020-08-27'
+});
 const router = Router();
 
 // Create PaymentIntent
 router.post('/create-payment-intent', async (req, res) => {
-  const { amount } = req.body;
-  const pi = await stripe.paymentIntents.create({ amount, currency: 'eur' });
-  res.json({ clientSecret: pi.client_secret });
+  try {
+    const { amount } = req.body;
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount,
+      currency: 'eur'
+    });
+    res.json({ clientSecret: paymentIntent.client_secret });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 // Webhook handler
-router.post('/webhooks/stripe', bodyParser.raw({ type: 'application/json' }), (req, res) => {
-  const sig = req.headers['stripe-signature'] as string;
-  let event;
-  try {
-    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
-  } catch (err) {
-    return res.status(400).send(`Webhook Error: ${err.message}`);
+router.post(
+  '/webhooks/stripe',
+  bodyParser.raw({ type: 'application/json' }),
+  (req, res) => {
+    const sig = req.headers['stripe-signature'] as string;
+    let event: Stripe.Event;
+
+    try {
+      event = stripe.webhooks.constructEvent(
+        req.body,
+        sig,
+        process.env.STRIPE_WEBHOOK_SECRET!
+      );
+    } catch (err: any) {
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    if (event.type === 'payment_intent.succeeded') {
+      const pi = event.data.object as Stripe.PaymentIntent;
+      // TODO: lookup Order by metadata and update status
+    }
+
+    res.json({ received: true });
   }
-  if (event.type === 'payment_intent.succeeded') {
-    const data = event.data.object as Stripe.PaymentIntent;
-    // TODO: fulfill order in DB using metadata
-  }
-  res.json({ received: true });
-});
+);
 
 export default router;

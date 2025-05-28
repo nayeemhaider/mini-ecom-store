@@ -10,18 +10,19 @@
   "dependencies": {
     "@stripe/react-stripe-js": "^1.4.0",
     "@stripe/stripe-js": "^1.13.0",
-    "axios": "^0.21.1",
+    "axios": "^1.9.0",
     "js-cookie": "^3.0.0",
     "jwt-decode": "^3.1.2",
-    "next": "12.0.7",
-    "react": "17.0.2",
-    "react-dom": "17.0.2"
+    "next": "^15.3.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@types/jest": "^27.0.3",
+    "@types/js-cookie": "^3.0.6",
     "@types/node": "^16.11.6",
     "@types/react": "^17.0.87",
-    "@types/react-dom": "^17.0.11",
+    "@types/react-dom": "^17.0.26",
     "autoprefixer": "^10.4.0",
     "eslint": "8.7.0",
     "eslint-config-next": "12.0.7",

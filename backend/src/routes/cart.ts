@@ -1,36 +1,91 @@
-import { Router } from 'express';
-import { CartItem } from '../models/CartItem';
+// src/routes/cart.ts
+
+import { Router, Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User';
+import { CartItem } from '../models/CartItem';
+
+// Extend Express.Request so TS knows `req.user` exists
+interface AuthRequest extends Request {
+  user: User;
+}
 
 const router = Router();
 
-// Middleware to extract user
-router.use(async (req, res, next) => {
-  const auth = req.headers.authorization?.split(' ')[1];
-  if (!auth) return res.status(401).end();
-  const payload: any = jwt.verify(auth, process.env.JWT_SECRET!);
-  req.user = await User.findByPk(payload.id);
-  next();
-});
+// Authentication middleware
+router.use(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const header = req.headers.authorization;
+    if (!header) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
 
-router.get('/', async (req, res) => {
-  const items = await CartItem.findAll({ where: { userId: req.user.id }, include: ['product'] });
+    const token = header.split(' ')[1];
+    let payload: any;
+    try {
+      payload = jwt.verify(token, process.env.JWT_SECRET!);
+    } catch {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    const user = await User.findByPk(payload.id);
+    if (!user) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    // Attach user to request for downstream handlers
+    (req as unknown as AuthRequest).user = user;
+    next();
+  }
+);
+
+// GET /api/cart
+router.get('/', async (req, res: Response) => {
+  const { user } = (req as unknown as AuthRequest);
+  const items = await CartItem.findAll({
+    where: { userId: user.id },
+    include: ['product']
+  });
   res.json({ items });
 });
 
-router.post('/', async (req, res) => {
-  const item = await CartItem.create({ userId: req.user.id, productId: req.body.productId, quantity: req.body.quantity });
+// POST /api/cart
+router.post('/', async (req, res: Response) => {
+  const { user } = (req as unknown as AuthRequest);
+  const { productId, quantity } = req.body;
+  const item = await CartItem.create({
+    userId: user.id,
+    productId,
+    quantity
+  });
   res.status(201).json(item);
 });
 
-router.put('/:productId', async (req, res) => {
-  await CartItem.update({ quantity: req.body.quantity }, { where: { userId: req.user.id, productId: req.params.productId }});
+// PUT /api/cart/:productId
+router.put('/:productId', async (req, res: Response) => {
+  const { user } = (req as unknown as AuthRequest);
+  const { quantity } = req.body;
+  await CartItem.update(
+    { quantity },
+    {
+      where: {
+        userId: user.id,
+        productId: req.params.productId
+      }
+    }
+  );
   res.json({});
 });
 
-router.delete('/:productId', async (req, res) => {
-  await CartItem.destroy({ where: { userId: req.user.id, productId: req.params.productId }});
+// DELETE /api/cart/:productId
+router.delete('/:productId', async (req, res: Response) => {
+  const { user } = (req as unknown as AuthRequest);
+  await CartItem.destroy({
+    where: {
+      userId: user.id,
+      productId: req.params.productId
+    }
+  });
   res.status(204).end();
 });
 
