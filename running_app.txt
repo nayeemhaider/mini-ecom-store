@@ -1,0 +1,22 @@
+# From project root
+docker-compose up --build
+
+Backend → http://localhost:8000
+
+Frontend → http://localhost:3000
+
+# Manually
+
+# In one terminal
+cd backend
+yarn dev          # starts ts-node-dev on port 8000
+
+# In another terminal
+cd frontend
+yarn dev          # starts Next.js on port 3000
+
+# Verify
+
+Visit http://localhost:3000 → you should hit the Next.js app.
+
+API calls to http://localhost:8000/api/... should return your endpoints (e.g. /api/products).
