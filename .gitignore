@@ -1,0 +1,13 @@
+# Node
+node_modules/
+.env
+
+# Python (if any)
+__pycache__/
+*.pyc
+
+# Docker
+docker-compose.override.yml
+
+# VSCode
+.vscode/
